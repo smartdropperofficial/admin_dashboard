@@ -2,7 +2,7 @@
 import { OrderSB } from "@/types/supabase/orders";
 
 export async function fetchOrders(): Promise<OrderSB[]> {
-  const res = await fetch("/api/orders");
+  const res = await fetch("/api/getOrders");
 
   if (!res.ok) {
     const { error } = await res.json();
