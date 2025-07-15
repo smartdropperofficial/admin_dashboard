@@ -11,6 +11,7 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { DataGrid, GridColDef, GridRowSelectionModel } from "@mui/x-data-grid";
 import { useOrdersNoQuery } from "@/hooks/useOrdersNoQuery";
 import type { OrderSB } from "@/types/supabase/orders";
+import { CustomColumnMenu } from "./CustomColumnMenu";
 
 /*───────────────────────────*
  * 1. Static column schema   *
@@ -112,6 +113,9 @@ export default function NewOrdersDataGrid() {
                   autoHeight
                   checkboxSelection
                   disableRowSelectionOnClick
+                  slots={{
+                    columnMenu: CustomColumnMenu, // 👉 qui lo attivi
+                  }}
                   onRowSelectionModelChange={(sel) =>
                     setSelected((prev) => ({ ...prev, [date]: sel }))
                   }
