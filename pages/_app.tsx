@@ -24,7 +24,7 @@ export default function MyApp(props: MyAppProps) {
       initialSession={pageProps.initialSession}
     >
       <CacheProvider value={emotionCache}>
-        <Head>
+        <Head>AppTheme
           <meta name="viewport" content="initial-scale=1, width=device-width" />
           <title>SmartDropper Dashboard</title>
         </Head>

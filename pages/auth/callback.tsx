@@ -45,7 +45,7 @@ export default function AuthCallback() {
         console.log("✅ [Callback] Session obtained:", data.session);
       }
 
-      router.replace("/Dashboard");
+      router.replace("/");
     })();
   }, [router, supabase]);
 
