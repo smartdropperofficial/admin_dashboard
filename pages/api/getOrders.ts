@@ -20,6 +20,7 @@ export default async function handler(
 
     const { data, error } = await supabase.from("orders").select("*");
     console.log("[API] Query executed: SELECT * FROM orders");
+    console.log("[API] Query  data:", data);
 
     if (error) {
       console.error("[API] Error fetching orders:", error.message);

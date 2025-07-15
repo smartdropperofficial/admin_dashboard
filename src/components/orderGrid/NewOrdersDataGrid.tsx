@@ -10,8 +10,9 @@ import {
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { DataGrid, GridColDef, GridRowSelectionModel } from "@mui/x-data-grid";
 import { useOrdersNoQuery } from "@/hooks/useOrdersNoQuery";
-import type { OrderSB } from "@/types/supabase/orders";
 import { CustomColumnMenu } from "./CustomColumnMenu";
+import { OrderStatus, OrderTableStatus } from "@/types/enums/enums";
+import { OrderSB } from "@/types/supabase/orders";
 
 /*───────────────────────────*
  * 1. Static column schema   *
@@ -24,9 +25,22 @@ const columns: GridColDef[] = [
     flex: 2,
     minWidth: 150,
   },
-  { field: "status", headerName: "Status", flex: 1, minWidth: 100 },
   {
-    field: "total_amount_paid",
+    field: "status",
+    headerName: "Status",
+    flex: 1,
+    minWidth: 100,
+    valueGetter: (params) => {
+      const status = params;
+      const entry = Object.values(OrderTableStatus).find(
+        (s) => s.value === status
+      );
+      return entry?.description || status;
+    },
+  },
+
+  {
+    field: "amount_paid",
     headerName: "Total Paid",
     type: "number",
     flex: 1,
@@ -39,7 +53,22 @@ const columns: GridColDef[] = [
     width: 180,
     valueFormatter: (p) => new Date(p).toLocaleDateString("it-IT"),
   },
-  { field: "payment_tx", headerName: "Payment TX", flex: 2, minWidth: 180 },
+  {
+    field: "pre_order_payment_tx",
+    headerName: "Payment TX",
+    flex: 2,
+    minWidth: 180,
+    renderCell: (params) => {
+      const hash = params.value;
+      if (!hash) return "-";
+      const url = `https://polygonscan.com/tx/${hash}`;
+      return (
+        <a href={url} target="_blank" rel="noopener noreferrer">
+          {hash.slice(0, 6)}...{hash.slice(-4)}
+        </a>
+      );
+    },
+  },
 ];
 
 /*───────────────────────────*
@@ -77,7 +106,28 @@ export default function NewOrdersDataGrid() {
   React.useEffect(() => setIsClient(true), []);
 
   /* Memo — dipende solo da orders */
-  const grouped = React.useMemo(() => groupByDate(orders), [orders]);
+  /* Effetti */
+  React.useEffect(() => setIsClient(true), []);
+
+  /* Memo — filtra e raggruppa solo PREORDER_PLACED */
+  const grouped = React.useMemo(() => {
+    console.debug("[DEBUG] Raw orders received:", orders);
+
+    const createdOnly = orders.filter(
+      (o) => o.status === OrderTableStatus.PREORDER_PLACED.value
+    );
+
+    console.debug(
+      "[DEBUG] Orders with status === PREORDER_PLACED:",
+      createdOnly
+    );
+
+    const groupedResult = groupByDate(createdOnly);
+
+    console.debug("[DEBUG] Grouped orders by date:", groupedResult);
+
+    return groupedResult;
+  }, [orders]);
 
   /*──────────────────────────*
    * 4. Render (solo JSX)     *
@@ -94,6 +144,11 @@ export default function NewOrdersDataGrid() {
   return (
     <Box sx={{ width: "100%" }}>
       {Object.entries(grouped).map(([date, rows]) => {
+        console.debug(
+          "[DEBUG] Rendering grouped entries:",
+          Object.entries(grouped)
+        );
+
         const ids = Array.isArray(selected[date]) ? selected[date] : [];
         return (
           <Accordion key={date} defaultExpanded>

@@ -1,3 +1,5 @@
+import { OrderStatus } from "../enums/enums";
+
 export interface OrderSB {
   order_id?: string;
   created_at?: string;
@@ -59,22 +61,6 @@ export interface ProductSB {
   isReturned?: number;
 }
 
-export enum OrderStatus {
-  CREATED = "CREATED",
-  WAITING_TAX = "WAITING_TAX",
-  WAITING_CONFIRMATION = "WAITING_CONFIRMATION",
-  PAYMENT_WITHDRAWN = "PAYMENT_WITHDRAWN",
-  ORDER_CONFIRMED = "ORDER_CONFIRMED",
-  SENT_TO_AMAZON = "SENT_TO_AMAZON",
-  RETURNED_TO_ZINC = "RETURNED_TO_ZINC",
-  RETURNED = "RETURNED",
-  CANCELED = "CANCELED",
-  COMPLETED = "COMPLETED",
-  SHIPPING_ADDRESS_REFUSED = "SHIPPING_ADDRESS_REFUSED",
-  PRODUCT_UNAVAILABLE = "PRODUCT_UNAVAILABLE",
-  ERROR = "ERROR",
-  INSUFFICIENT_ZMA_BALANCE = "INSUFFICIENT_ZMA_BALANCE",
-}
 export interface RefundSB {
   asin: string;
   transaction: string;

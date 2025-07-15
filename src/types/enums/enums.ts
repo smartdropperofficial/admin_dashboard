@@ -18,7 +18,7 @@ export const OrderTableStatus = {
   //  BASKET: { value: 'BASKET', description: 'Basket' },
   PREORDER_PLACED: {
     value: "PREORDER_PLACED",
-    description: "Pre Order placed",
+    description: "Pre-Order Placed",
     tooltip_text:
       "Your Pre Order has arrived in our systems and we are processing it. ",
   },
@@ -104,7 +104,6 @@ export enum ReturnSteps {
   UPDATING_LAST_DATA = "UPDATING_LAST_DATA",
   OPERATION_COMPLETED = "OPERATION_COMPLETED",
 }
-
 export enum ReturnStatusSteps {
   PLACING_RETURN = "PLACING_RETURN",
   RETURN_PLACED = "RETURN_PLACED",
@@ -121,7 +120,6 @@ export enum ScraperParser {
   OXYLABS = "OXYLABS",
   RAINFOREST = "RAINFOREST",
 }
-
 export enum CustomerType {
   CONSUMER = "CONSUMER",
   BUSINESS = "BUSINESS",
