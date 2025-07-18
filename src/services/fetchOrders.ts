@@ -1,7 +1,7 @@
 // lib/fetchOrders.ts
-import { OrderSB } from "@/types/supabase/orders";
+import { OrdersSB } from "@/types/supabase/orders";
 
-export async function fetchOrders(): Promise<OrderSB[]> {
+export async function fetchOrders(): Promise<OrdersSB[]> {
   const res = await fetch("/api/getOrders");
 
   if (!res.ok) {

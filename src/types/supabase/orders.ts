@@ -1,42 +1,41 @@
 import { OrderStatus } from "../enums/enums";
 
-export interface OrderSB {
-  order_id?: string;
-  created_at?: string;
-  wallet_address?: string;
-  country?: string;
-  status?: OrderStatus;
-  shipping_info?: ShippingInfoSB;
-  products?: ProductSB[];
-  request_id?: string;
-  payment_tx?: string;
-  unlock_tx?: string;
-  return_tx?: string;
-  creation_tx?: string;
-  tax_request_id?: string;
-  tax_amount?: number;
-  subtotal_amount?: number;
-  total_amount?: number;
-  total_amount_paid?: number;
-  pre_order_payment_tx?: string;
-  pre_order_amount_paid_tx?: string;
-  tax_payment_tx?: string;
-  previous_status?: string[];
-  shipping_amount?: number;
-  refund?: RefundSB[];
-  user_id?: number | null | undefined;
-  commission?: number;
-  email?: string;
-  currency?: string;
-  retailer?: string;
-  ticket_id?: string; // Aggiunta dei ticket di supporto
-  pre_order_amount?: number;
-  preorder_withdrawn_tx?: string;
-  order_taxes_withdrawn_tx?: string;
-  pre_order_amount_paid?: number;
-  error?: string;
-  modified_at?: string;
-}
+export type OrdersSB = {
+  id: number;
+  created_at: string | null;
+  wallet_address: string;
+  status: OrderStatus;
+  order_id: string;
+  shipping_info: ShippingInfoSB;
+  request_id: string | null;
+  pre_order_payment_tx: string | null;
+  tax_request_id: string | null;
+  tax_amount: number | null;
+  total_amount: number | null;
+  subtotal_amount: number | null;
+  amount_paid: number | null;
+  shipping_amount: number | null;
+  products: ProductSB[];
+  tracking: string | null;
+  retailer: "AMAZON" | string | null;
+  total_items: number | null;
+  zone: string | null;
+  currency: string | null;
+  custom_error: string | null;
+  commission: number | null;
+  email: string | null;
+  read: boolean | null;
+  pre_order_amount: number;
+  tax_order_creation_tx: string | null;
+  tax_order_amount: number | null;
+  tax_order_payment_tx: string | null;
+  modified_at: string | null;
+  wrapper_id: string | null;
+  country: string | null;
+  crypto_type: "BTC" | "ETH" | "XMR" | string | null; // aggiusta con i valori reali di enum se necessario
+  preorder_payment_timestamp: string | null;
+  tax_payment_timestamp: string | null;
+};
 
 export interface ShippingInfoSB {
   first_name: string;

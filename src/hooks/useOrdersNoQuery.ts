@@ -1,11 +1,11 @@
 import { useEffect, useState, useMemo } from "react";
 import { fetchOrders } from "@/services/fetchOrders";
-import type { OrderSB } from "@/types/supabase/orders";
+import type { OrdersSB } from "@/types/supabase/orders";
 
-type OrdersByStatus = Record<string, OrderSB[]>;
+type OrdersByStatus = Record<string, OrdersSB[]>;
 
 export function useOrdersNoQuery() {
-  const [orders, setOrders] = useState<OrderSB[]>([]);
+  const [orders, setOrders] = useState<OrdersSB[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
