@@ -19,7 +19,6 @@ import {
   treeViewCustomizations,
 } from "@/theme/customizations/index";
 import Alert from "@mui/material/Alert";
-import { GetServerSidePropsContext } from "next";
 
 const xThemeComponents = {
   ...chartsCustomizations,
@@ -27,7 +26,6 @@ const xThemeComponents = {
   ...datePickersCustomizations,
   ...treeViewCustomizations,
 };
-import { createPagesServerClient } from "@supabase/auth-helpers-nextjs";
 
 export default function Dashboard(props: {
   disableCustomTheme?: boolean;

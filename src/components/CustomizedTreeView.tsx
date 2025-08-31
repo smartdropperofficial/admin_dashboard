@@ -17,7 +17,7 @@ import {
   UseTreeItemParameters,
 } from "@mui/x-tree-view";
 
-type Color = "blue" | "green";
+type Color = "blue" | "green" | "red";
 
 type TreeItemExtraProps = {
   link?: string;
@@ -36,12 +36,15 @@ interface CustomizedTreeViewProps {
   defaultExpanded?: string[];
   defaultSelected?: string[];
   onLinkClick?: (link: string) => void;
+  onSelectItem?: (item: CustomItem) => void; // 👈 Callback principale
 }
 
 export interface CustomTreeItemProps
   extends Omit<UseTreeItemParameters, "rootRef">,
     Omit<React.HTMLAttributes<HTMLLIElement>, "onFocus"> {
   onItemClick?: (itemId: string, link?: string) => void;
+  onSelectItem?: (item: CustomItem) => void; // 👈 Aggiungi questa prop
+  allItems?: CustomItem[]; // 👈 Per trovare l'item completo
 }
 
 function DotIcon({ color }: { color: string }) {
@@ -66,6 +69,7 @@ function CustomLabel({
   const colors = {
     blue: (theme.vars || theme).palette.primary.main,
     green: (theme.vars || theme).palette.success.main,
+    red: (theme.vars || theme).palette.error.main,
   };
 
   const iconColor = color ? colors[color] : undefined;
@@ -93,10 +97,33 @@ function TransitionComponent(props: { in: boolean }) {
   return <AnimatedCollapse style={style} {...props} />;
 }
 
+// 👈 Funzione helper per trovare un item nell'albero
+function findItemById(items: CustomItem[], id: string): CustomItem | null {
+  for (const item of items) {
+    if (item.id === id) {
+      return item;
+    }
+    if (item.children) {
+      const found = findItemById(item.children, id);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
 const CustomTreeItem = React.forwardRef<HTMLLIElement, CustomTreeItemProps>(
   function CustomTreeItem(props, ref) {
-    const { id, itemId, label, disabled, children, onItemClick, ...other } =
-      props;
+    const {
+      id,
+      itemId,
+      label,
+      disabled,
+      children,
+      onItemClick,
+      onSelectItem,
+      allItems,
+      ...other
+    } = props;
 
     const {
       getRootProps,
@@ -111,9 +138,21 @@ const CustomTreeItem = React.forwardRef<HTMLLIElement, CustomTreeItemProps>(
     const item = publicAPI.getItem(itemId) as CustomItem;
     const color = item?.color;
 
-    const handleClick = () => {
+    const handleClick = (event: React.MouseEvent) => {
+      console.log("🌳 TreeItem clicked:", itemId, label);
+
+      // Gestisci il link se esiste
       if (onItemClick && item?.link) {
         onItemClick(itemId, item.link);
+      }
+
+      // 👈 NUOVO: Gestisci la selezione per il callback principale
+      if (onSelectItem && allItems) {
+        const fullItem = findItemById(allItems, itemId);
+        if (fullItem) {
+          console.log("✅ Calling onSelectItem with:", fullItem);
+          onSelectItem(fullItem);
+        }
       }
     };
 
@@ -128,7 +167,7 @@ const CustomTreeItem = React.forwardRef<HTMLLIElement, CustomTreeItemProps>(
                 focused: status.focused,
                 disabled: status.disabled,
               }),
-              onClick: handleClick,
+              onClick: handleClick, // 👈 Aggiungi il click handler
             })}
           >
             {status.expandable && (
@@ -155,13 +194,45 @@ export default function CustomizedTreeView({
   defaultExpanded = [],
   defaultSelected = [],
   onLinkClick,
+  onSelectItem, // 👈 Ricevi la callback
 }: CustomizedTreeViewProps) {
+  // 👈 NUOVO: Gestisci la selezione del tree
+  const handleSelectionChange = (
+    event: React.SyntheticEvent,
+    itemIds: string[]
+  ) => {
+    console.log("🎯 Tree selection changed:", itemIds);
+
+    if (onSelectItem && itemIds.length > 0) {
+      const selectedId = itemIds[itemIds.length - 1]; // Prendi l'ultimo selezionato
+      const selectedItem = findItemById(items, selectedId);
+
+      if (selectedItem) {
+        console.log("📋 Found selected item:", selectedItem);
+
+        // 👈 FILTRA SOLO I NODI FOGLIA (che hanno i dati)
+        // Non processare i nodi parent che non hanno configurazione
+        const isLeafNode =
+          !selectedItem.children || selectedItem.children.length === 0;
+
+        if (isLeafNode) {
+          console.log("✅ Processing leaf node:", selectedItem.id);
+          onSelectItem(selectedItem);
+        } else {
+          console.log("⏭️ Skipping parent node:", selectedItem.id);
+        }
+      }
+    }
+  };
+
   const Item = React.forwardRef<HTMLLIElement, CustomTreeItemProps>(
     function Item(props, ref) {
       return (
         <CustomTreeItem
           ref={ref}
           {...props}
+          allItems={items} // 👈 Passa tutti gli items
+          onSelectItem={onSelectItem} // 👈 Passa la callback
           onItemClick={(itemId, link) => {
             if (link && onLinkClick) {
               onLinkClick(link);
@@ -184,9 +255,10 @@ export default function CustomizedTreeView({
       <RichTreeView<CustomItem>
         items={items}
         aria-label={title}
-        multiSelect
+        multiSelect={false} // 👈 Cambia a single select per semplicità
         defaultExpandedItems={defaultExpanded}
         defaultSelectedItems={defaultSelected}
+        onSelectedItemsChange={handleSelectionChange} // 👈 NUOVO: Gestisci la selezione
         sx={{
           px: 1,
           pb: 1,

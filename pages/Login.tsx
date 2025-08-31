@@ -48,21 +48,33 @@ const SignInContainer = styled(Stack)(({ theme }) => ({
   height: "calc((1 - var(--template-frame-height, 0)) * 100dvh)",
   minHeight: "100%",
   padding: theme.spacing(2),
+  position: "relative",
+  overflow: "hidden",
   [theme.breakpoints.up("sm")]: {
     padding: theme.spacing(4),
   },
   "&::before": {
     content: '""',
-    display: "block",
     position: "absolute",
-    zIndex: -1,
     inset: 0,
-    backgroundImage:
-      "radial-gradient(ellipse at 50% 50%, hsl(210, 100%, 97%), hsl(0, 0%, 100%))",
+    zIndex: -1,
+    backgroundColor: "#ff99ad",
+    backgroundImage: `
+      background-color:#cf99ff;
+background-image:
+radial-gradient(at 12% 53%, hsla(172,99%,61%,1) 0px, transparent 50%),
+radial-gradient(at 66% 30%, hsla(253,72%,62%,1) 0px, transparent 50%),
+radial-gradient(at 43% 52%, hsla(196,84%,77%,1) 0px, transparent 50%),
+radial-gradient(at 15% 87%, hsla(202,94%,63%,1) 0px, transparent 50%),
+radial-gradient(at 52% 8%, hsla(297,84%,62%,1) 0px, transparent 50%),
+radial-gradient(at 61% 93%, hsla(268,86%,61%,1) 0px, transparent 50%),
+radial-gradient(at 33% 33%, hsla(116,91%,73%,1) 0px, transparent 50%);
+    `,
     backgroundRepeat: "no-repeat",
+    backgroundSize: "cover",
+    clipPath: "polygon(0 0, 100% 0, 100% 40%, 0% 70%)", // 👈 più alta e visibile
     ...theme.applyStyles("dark", {
-      backgroundImage:
-        "radial-gradient(at 50% 50%, hsla(210, 100%, 16%, 0.5), hsl(220, 30%, 5%))",
+      filter: "brightness(0.5) blur(4px)",
     }),
   },
 }));

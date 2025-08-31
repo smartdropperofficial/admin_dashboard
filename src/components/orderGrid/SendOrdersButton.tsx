@@ -1,6 +1,6 @@
 import * as React from "react";
-import { OrdersSB } from "@/types/supabase/orders";
 import { useSendTaxRequests } from "@/hooks/useSendTaxRequests";
+import { GridRowSelectionModel } from "@mui/x-data-grid";
 
 export function SendOrdersButton({
   selectedOrders,

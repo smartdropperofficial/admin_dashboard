@@ -14,28 +14,49 @@ export function useOrdersNoQuery() {
 
     (async () => {
       try {
-        const data = await fetchOrders(); // tua funzione fetch esistente
-        console.log("🚀 ~ data:", data);
-        if (!cancelled) setOrders(data);
+        console.log("🔄 Starting fetch orders...");
+
+        const data = await fetchOrders();
+        console.log("🚀 ~ fetchOrders result:", {
+          isArray: Array.isArray(data),
+          length: data?.length || 0,
+          sampleData: data?.[0],
+          allData: data,
+        });
+
+        if (!cancelled) {
+          setOrders(data || []); // 👈 Fallback to empty array
+          console.log("✅ Orders set in state:", data?.length || 0);
+        }
       } catch (e) {
+        console.error("❌ Error fetching orders:", e);
         if (!cancelled) setError(e as Error);
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+          console.log("🏁 Loading complete");
+        }
       }
     })();
 
     return () => {
       cancelled = true;
+      console.log("🧹 useOrdersNoQuery cleanup");
     };
   }, []);
 
   const ordersByStatus: OrdersByStatus = useMemo(() => {
-    return orders.reduce((acc, order) => {
+    console.log("🔄 Computing ordersByStatus with", orders.length, "orders");
+
+    const result = orders.reduce((acc, order) => {
       const status = order.status || "unknown";
       if (!acc[status]) acc[status] = [];
       acc[status].push(order);
       return acc;
     }, {} as OrdersByStatus);
+
+    console.log("📊 Orders grouped by status:", result);
+    return result;
   }, [orders]);
 
   return { orders, ordersByStatus, loading, error };

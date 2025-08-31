@@ -17,89 +17,11 @@ import DynamicDataGrid from "./orderGrid/DynamicDataGrid";
 import { useState, useEffect, useMemo } from "react";
 import { GridColDef } from "@mui/x-data-grid";
 import { useOrdersNoQuery } from "@/hooks/useOrdersNoQuery";
-import { OrderStatus, OrderTableStatus } from "@/types/enums/enums";
+import { OrderStatus } from "@/types/enums/enums";
 
-// COLONNE PREDEFINITE PER DIVERSI TIPI DI VISTA
+// 👈 COLONNE PREDEFINITE PER DIVERSI TIPI DI VISTA
 const getColumnsForView = (viewType: string): GridColDef[] => {
-  if (viewType === "new_orders") {
-    return [
-      {
-        field: "order_id",
-        headerName: "Order ID",
-        flex: 1,
-        minWidth: 100,
-      },
-      {
-        field: "wallet_address",
-        headerName: "Wallet Address",
-        flex: 2,
-        minWidth: 150,
-        renderCell: (params) => {
-          const addr = params.value;
-          if (!addr || addr.length < 8) return addr || "N/A";
-          const mid = Math.floor(addr.length / 2);
-          return "..." + addr.slice(mid);
-        },
-      },
-      {
-        field: "status",
-        headerName: "Status",
-        flex: 1,
-        minWidth: 100,
-        valueGetter: (params) => {
-          const status = params.row?.status || params.value;
-          const entry = Object.values(OrderTableStatus).find(
-            (s) => s.value === status
-          );
-          return entry?.description || status;
-        },
-      },
-      {
-        field: "pre_order_amount",
-        headerName: "Total Paid",
-        type: "number",
-        flex: 1,
-        minWidth: 120,
-        valueFormatter: (params) => {
-          const value = params.value || params.row?.pre_order_amount || 0;
-          return `$${Number(value).toFixed(2)}`;
-        },
-      },
-      {
-        field: "created_at",
-        headerName: "Created At",
-        width: 180,
-        valueFormatter: (params) => {
-          const date = params.value || params.row?.created_at;
-          return date ? new Date(date).toLocaleDateString("it-IT") : "N/A";
-        },
-      },
-      {
-        field: "pre_order_payment_tx",
-        headerName: "Payment TX",
-        flex: 2,
-        minWidth: 180,
-        renderCell: (params) => {
-          const hash = params.value;
-          if (!hash) return "-";
-          const url = `https://polygonscan.com/tx/${hash}`;
-          return (
-            <a
-              href={url}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ color: "#1976d2" }}
-            >
-              {hash.slice(0, 6)}...{hash.slice(-4)}
-            </a>
-          );
-        },
-      },
-    ];
-  }
-
-  // Colonne base per altri tipi
-  const baseColumns: GridColDef[] = [
+  const baseOrderColumns: GridColDef[] = [
     {
       field: "order_id",
       headerName: "Order ID",
@@ -150,82 +72,101 @@ const getColumnsForView = (viewType: string): GridColDef[] => {
     },
   ];
 
-  if (viewType === "tax_requests") {
-    return [
-      ...baseColumns,
-      {
-        field: "tax_amount",
-        headerName: "Tax Due",
-        flex: 1,
-        minWidth: 100,
-        valueFormatter: (params) => {
-          const value = params.value || 0;
-          return `$${Number(value).toFixed(2)}`;
+  switch (viewType) {
+    case "new_orders":
+      return [
+        ...baseOrderColumns,
+        {
+          field: "preorder_payment_timestamp",
+          headerName: "Payment Time",
+          width: 150,
+          valueFormatter: (params) => {
+            const date = params.value;
+            return date ? new Date(date).toLocaleDateString("it-IT") : "N/A";
+          },
         },
-      },
-    ];
-  }
+      ];
 
-  if (viewType === "failed_orders") {
-    return [
-      ...baseColumns,
-      {
-        field: "custom_error",
-        headerName: "Error Details",
-        flex: 2,
-        minWidth: 200,
-        renderCell: (params) => (
-          <span style={{ color: "red", fontSize: "0.9em" }}>
-            {params.value || "No error details"}
-          </span>
-        ),
-      },
-    ];
-  }
+    case "tax_requests":
+      return [
+        ...baseOrderColumns,
+        {
+          field: "tax_amount",
+          headerName: "Tax Due",
+          flex: 1,
+          minWidth: 100,
+          valueFormatter: (params) => {
+            const value = params.value || 0;
+            return `$${Number(value).toFixed(2)}`;
+          },
+        },
+        {
+          field: "tax_request_id",
+          headerName: "Tax Request ID",
+          flex: 1,
+          minWidth: 150,
+        },
+      ];
 
-  return baseColumns;
+    case "failed_orders":
+      return [
+        ...baseOrderColumns,
+        {
+          field: "custom_error",
+          headerName: "Error Details",
+          flex: 2,
+          minWidth: 200,
+          renderCell: (params) => (
+            <span style={{ color: "red", fontSize: "0.9em" }}>
+              {params.value || "No error details"}
+            </span>
+          ),
+        },
+        {
+          field: "modified_at",
+          headerName: "Failed At",
+          width: 150,
+          valueFormatter: (params) => {
+            const date = params.value;
+            return date ? new Date(date).toLocaleDateString("it-IT") : "N/A";
+          },
+        },
+      ];
+
+    default:
+      return baseOrderColumns;
+  }
 };
 
-// CONFIGURAZIONI DI VISTA PREDEFINITE
+// 👈 CONFIGURAZIONI DI VISTA PREDEFINITE
 const VIEW_CONFIGS = {
   "1.1": {
     viewType: "new_orders",
-    title: "New Orders (All)",
+    title: "New Orders",
     statusFilter: OrderStatus.PREORDER_PLACED,
-    statusAlternatives: ["PREORDER_PLACED", "CREATED", "BASKET"],
-    showAllIfEmpty: true,
     emptyMessage: "Nessun nuovo ordine trovato",
   },
   "1.2": {
     viewType: "tax_requests",
     title: "Tax Requests",
     statusFilter: OrderStatus.AWAITING_TAX,
-    statusAlternatives: ["AWAITING_TAX", "TAX_PENDING"],
-    showAllIfEmpty: false,
     emptyMessage: "Nessuna richiesta di tassa trovata",
   },
   "2.1": {
     viewType: "failed_orders",
     title: "Failed Orders",
     statusFilter: OrderStatus.ERROR,
-    statusAlternatives: [
-      "ERROR",
-      "TAX_FAILED",
-      "SHIPPING_ADDRESS_REFUSED",
-      "PRODUCT_UNAVAILABLE",
-    ],
-    showAllIfEmpty: false,
     emptyMessage: "Nessun ordine fallito trovato",
   },
 };
 
-// DATI MOCK PER TEST
+// 👈 DATI MOCK PER TEST (rimuovi quando l'API funziona)
 const MOCK_ORDERS = [
   {
     id: 1,
     order_id: "ORD_001",
     wallet_address: "0x1234567890abcdef1234567890abcdef12345678",
-    status: OrderStatus.PREORDER_PLACED,
+    status: OrderStatus.PREORDER_PLACED, // 👈 USA L'ENUM
     pre_order_amount: 25.5,
     created_at: "2025-08-30T10:30:00Z",
     modified_at: "2025-08-30T10:30:00Z",
@@ -235,7 +176,7 @@ const MOCK_ORDERS = [
     id: 2,
     order_id: "ORD_002",
     wallet_address: "0xabcdef1234567890abcdef1234567890abcdef12",
-    status: OrderStatus.AWAITING_TAX,
+    status: OrderStatus.AWAITING_TAX, // 👈 USA L'ENUM
     pre_order_amount: 45.75,
     tax_amount: 8.25,
     tax_request_id: "TAX_REQ_001",
@@ -246,7 +187,7 @@ const MOCK_ORDERS = [
     id: 3,
     order_id: "ORD_003",
     wallet_address: "0x9876543210fedcba9876543210fedcba98765432",
-    status: OrderStatus.ERROR,
+    status: OrderStatus.ERROR, // 👈 USA L'ENUM
     pre_order_amount: 15.25,
     custom_error: "Payment verification failed",
     created_at: "2025-08-28T08:45:00Z",
@@ -304,9 +245,10 @@ const treeItems: CustomItem[] = [
   },
 ];
 
-// Utilità per raggruppamento per data
+// Utilità per raggruppamento per data (FIXED)
 const groupByDate = (rows: any[]) => {
   return rows.reduce((acc, order) => {
+    // Usa created_at se modified_at non esiste
     const dateField = order.modified_at || order.created_at;
     const key = dateField
       ? new Date(dateField).toLocaleDateString("it-IT")
@@ -332,9 +274,9 @@ export default function MainGrid() {
     emptyMessage?: string;
   } | null>(null);
 
-  // USA DATI MOCK SE L'API È VUOTA
+  // 👈 USA DATI MOCK SE L'API È VUOTA (per test)
   const orders = useMemo(() => {
-    console.log("Deciding data source:", {
+    console.log("🔍 Deciding data source:", {
       apiOrdersExists: !!apiOrders,
       apiOrdersLength: apiOrders?.length || 0,
       loading,
@@ -342,20 +284,22 @@ export default function MainGrid() {
     });
 
     if (!loading && apiOrders && apiOrders.length > 0) {
-      console.log("Using real API data:", apiOrders.length);
+      console.log("✅ Using real API data:", apiOrders.length);
       return apiOrders;
     } else if (!loading) {
-      console.log("Using mock data for testing (API returned empty or failed)");
+      console.log(
+        "🧪 Using mock data for testing (API returned empty or failed)"
+      );
       return MOCK_ORDERS;
     } else {
-      console.log("Still loading, returning empty array");
+      console.log("⏳ Still loading, returning empty array");
       return [];
     }
   }, [apiOrders, loading, error]);
 
   // Debug: mostriamo lo stato degli ordini
   useEffect(() => {
-    console.log("MainGrid state:", {
+    console.log("📊 MainGrid state:", {
       ordersCount: orders?.length || 0,
       loading,
       error: error?.message,
@@ -365,8 +309,12 @@ export default function MainGrid() {
     });
 
     if (orders && orders.length > 0) {
-      console.log("Sample order details:", JSON.stringify(orders[0], null, 2));
+      console.log(
+        "📋 Sample order details:",
+        JSON.stringify(orders[0], null, 2)
+      );
 
+      // Mostra distribuzione per status
       const statusCounts = orders.reduce(
         (acc: Record<string, number>, order) => {
           const status = order.status || "UNKNOWN";
@@ -375,9 +323,10 @@ export default function MainGrid() {
         },
         {}
       );
-      console.log("Orders by status:", statusCounts);
+      console.log("📈 Orders by status:", statusCounts);
 
-      console.log("Expected statuses:", {
+      // Mostra tutti gli status disponibili vs quelli che cerchiamo
+      console.log("🎯 Expected statuses:", {
         PREORDER_PLACED: OrderStatus.PREORDER_PLACED,
         AWAITING_TAX: OrderStatus.AWAITING_TAX,
         ERROR: OrderStatus.ERROR,
@@ -386,8 +335,8 @@ export default function MainGrid() {
   }, [orders, loading, error, selectedNode, tableConfig]);
 
   const handleSelectItem = (item: CustomItem) => {
-    console.log("handleSelectItem called with:", item.id, item.label);
-    console.log("Current orders state:", {
+    console.log("🎯 handleSelectItem called with:", item.id, item.label);
+    console.log("📊 Current orders state:", {
       ordersExists: !!orders,
       ordersLength: orders?.length || 0,
       loading,
@@ -396,80 +345,51 @@ export default function MainGrid() {
 
     setSelectedNode(item);
 
+    // 👈 OTTIENI LA CONFIGURAZIONE PER QUESTA VISTA
     const viewConfig = VIEW_CONFIGS[item.id as keyof typeof VIEW_CONFIGS];
 
     if (!viewConfig) {
-      console.log("Unknown item id:", item.id);
+      console.log("🤷 Unknown item id:", item.id);
       setTableConfig(null);
       return;
     }
 
+    // 👈 OTTIENI LE COLONNE SPECIFICHE PER QUESTA VISTA
     const columns = getColumnsForView(viewConfig.viewType);
     console.log(
-      "Using columns for view type:",
+      "🏗️ Using columns for view type:",
       viewConfig.viewType,
       columns.length
     );
 
+    // Filtra i dati (anche se vuoto, mostra la tabella)
     const ordersToFilter = orders || [];
-    console.log(
-      "All available orders with statuses:",
-      ordersToFilter.map((o) => ({
-        order_id: o.order_id,
-        status: o.status,
-        statusType: typeof o.status,
-      }))
-    );
-
     const filteredOrders = ordersToFilter.filter((o) => {
-      if (o.status === viewConfig.statusFilter) {
-        return true;
-      }
-
-      const matchesAlternative = viewConfig.statusAlternatives?.includes(
-        o.status
-      );
-
-      console.log("Filter check:", {
+      const matches = o.status === viewConfig.statusFilter;
+      console.log("🔍 Filter check:", {
         orderStatus: o.status,
         expectedStatus: viewConfig.statusFilter,
-        alternatives: viewConfig.statusAlternatives,
-        exactMatch: o.status === viewConfig.statusFilter,
-        alternativeMatch: matchesAlternative,
-        finalMatch: matchesAlternative || o.status === viewConfig.statusFilter,
+        matches: matches,
         orderId: o.order_id,
       });
-
-      return matchesAlternative || false;
+      return matches;
     });
 
     console.log(
-      `${viewConfig.title} filtered: ${filteredOrders.length}/${ordersToFilter.length}`
+      `📊 ${viewConfig.title} filtered: ${filteredOrders.length}/${ordersToFilter.length}`
     );
-    console.log("All available order statuses:", [
-      ...new Set(ordersToFilter.map((o) => o.status)),
-    ]);
-    console.log("Looking for status:", viewConfig.statusFilter);
 
-    let finalOrders = filteredOrders;
-    if (
-      filteredOrders.length === 0 &&
-      viewConfig.showAllIfEmpty &&
-      ordersToFilter.length > 0
-    ) {
-      console.log("No matches found, showing all orders as fallback");
-      finalOrders = ordersToFilter;
-    }
-
+    // 👈 MOSTRA SEMPRE LA TABELLA CON LE COLONNE APPROPRIATE
     setTableConfig({
-      columns: columns,
-      rows: finalOrders,
-      groupByDate: finalOrders.length > 0 ? groupByDate : undefined,
+      columns: columns, // Colonne specifiche per il tipo di vista
+      rows: filteredOrders, // Può essere vuoto, ma tabella si vede
+      groupByDate: filteredOrders.length > 0 ? groupByDate : undefined,
       title: viewConfig.title,
       emptyMessage: viewConfig.emptyMessage,
     });
   };
 
+  // Loading state
   if (loading) {
     return (
       <Box sx={{ width: "100%", maxWidth: { sm: "100%", md: "1700px" } }}>
@@ -480,6 +400,7 @@ export default function MainGrid() {
     );
   }
 
+  // Error state
   if (error) {
     return (
       <Box sx={{ width: "100%", maxWidth: { sm: "100%", md: "1700px" } }}>
@@ -499,6 +420,7 @@ export default function MainGrid() {
 
   return (
     <Box sx={{ width: "100%", maxWidth: { sm: "100%", md: "1700px" } }}>
+      {/* Overview */}
       <Typography component="h2" variant="h6" sx={{ mb: 2 }}>
         Overview
       </Typography>
@@ -519,6 +441,7 @@ export default function MainGrid() {
         </Grid>
       </Grid>
 
+      {/* Details */}
       <Typography component="h2" variant="h6" sx={{ mb: 2 }}>
         Details ({orders?.length || 0} ordini totali)
         {!loading && (!apiOrders || apiOrders.length === 0) && (
@@ -569,8 +492,8 @@ export default function MainGrid() {
               }}
             >
               <Typography variant="h6" color="text.secondary">
-                Seleziona una categoria dal menu a sinistra per visualizzare gli
-                ordini
+                👈 Seleziona una categoria dal menu a sinistra per visualizzare
+                gli ordini
               </Typography>
               {selectedNode && (
                 <Typography variant="body2" sx={{ mt: 1 }}>
